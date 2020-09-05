@@ -1,53 +1,24 @@
-const csvjson = require('csvtojson');
-const csv = require('csv-parser');
-const fs = require('fs');
-const _ = require('lodash');
-const { group } = require('console');
-const { reduce, uniqueId, first, result, iteratee } = require('lodash');
+const csv = require('csv-parser')
+const fs = require('fs')
+const arrayCSV = [];
 
-csvjson().fromFile('input.csv')
-    .then(entrada => {
-      
-      //console.log(entrada[2]);
-      
-        let arrayOutPut = [...entrada.reduce((hash, { fullname, eid, classes}) => {
-            let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: []};
-            
-            classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(classes));
-            //addresses &&(arrayTemporaria.addresses = ))
-            
-            return hash.set(eid, arrayTemporaria);
-          }, new Map).values()];
-        
-          console.log(arrayOutPut);
+fs.createReadStream('input.csv')
+  .pipe(csv())
+  //alterar nome das colunas class, que estão duplicadas no arquivo csv
+  .on('headers', function (headerList) {
+    headerList[2] = 'class 01'
+    headerList[3] = 'class 02';
+  })
+  .on('data', (data) => arrayCSV.push(data)
+  ) 
 
-          fs.writeFile('output.json', arrayOutPut, (err) => {
-                      if (err) {
-                          throw err;
-                      }
-             //         console.log("JSON salvo!")
-                })
-          
-          }).catch(err => {
-              console.log(err);
-          });
-        
+  .on('end', () => {
 
+    let arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all}) => {
+      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses:[], invisible, see_all};
+   
+      return hash.set(eid, arrayTemporaria);
+    }, new Map).values()];
 
-  //      fs.writeFile('output.json', arrayOutPut, (err) => {
-  //          if (err) {
-  //              throw err;
-  //          }
-  //          console.log("JSON salvo!")
-//            console.log(arrayOutPut);
-  //      })
-
-//}).catch(err => {
-  //  console.log(err);
-//});
-
-    
-
-
-
-
+    console.log(arrayOutPut);
+  })

@@ -1,10 +1,7 @@
 const csv = require('csv-parser')
-const assert = require('assert')
-const csvtojson = require('csvtojson')
 const _ = require('lodash')
 const fs = require('fs');
 var arrayCSV = [];
-var classesAgrupadas = [];
 var arrayOutPut = [];
 
 
@@ -23,30 +20,33 @@ fs.createReadStream('input.csv'
   })
 
   .on('data', (data) => {
-
     arrayCSV.push(data);
 
-  }
-  )
+    arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all }) => {
+
+      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses: [], invisible, see_all };
+
+      classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(classes));
+
+      classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(arrayCSV.class02));
+
+      return hash.set(eid, arrayTemporaria);
+
+    }, new Map).values()];
+
+  })
 
   .on('end', () => {
 
+    const arquivoJSON = JSON.stringify(arrayOutPut);
 
-
-    arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all }) => {
-      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses: [], invisible, see_all };
-
-
-    classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(classes));
-
-
-    classes &&  (arrayTemporaria.classes = arrayTemporaria.classes.concat(arrayCSV.class02));
-
-//      console.log(arrayTemporaria);
-
-      return hash.set(eid, arrayTemporaria);
-    }, new Map).values()];
-
-    console.log(arrayOutPut);
+    fs.writeFile('output.json', arquivoJSON, (err) => {
+      if (err) {
+        throw err;
+      }
+    })
   })
+
+
+
 

@@ -1,24 +1,52 @@
 const csv = require('csv-parser')
-const fs = require('fs')
-const arrayCSV = [];
+const assert = require('assert')
+const csvtojson = require('csvtojson')
+const _ = require('lodash')
+const fs = require('fs');
+var arrayCSV = [];
+var classesAgrupadas = [];
+var arrayOutPut = [];
 
-fs.createReadStream('input.csv')
+
+fs.createReadStream('input.csv'
+  .trim(), {
+  columns: true,
+  columns_duplicates_to_array: true,
+  delimiter: [",", "/"]
+}
+)
   .pipe(csv())
-  //alterar nome das colunas class, que estão duplicadas no arquivo csv
+
   .on('headers', function (headerList) {
-    headerList[2] = 'class 01'
-    headerList[3] = 'class 02';
+    headerList[2] = 'classes'
+    headerList[3] = 'class02';
   })
-  .on('data', (data) => arrayCSV.push(data)
-  ) 
+
+  .on('data', (data) => {
+
+    arrayCSV.push(data);
+
+  }
+  )
 
   .on('end', () => {
 
-    let arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all}) => {
-      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses:[], invisible, see_all};
-   
+
+
+    arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all }) => {
+      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses: [], invisible, see_all };
+
+
+    classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(classes));
+
+
+    classes &&  (arrayTemporaria.classes = arrayTemporaria.classes.concat(arrayCSV.class02));
+
+//      console.log(arrayTemporaria);
+
       return hash.set(eid, arrayTemporaria);
     }, new Map).values()];
 
     console.log(arrayOutPut);
   })
+

@@ -1,44 +1,43 @@
 const csv = require('csv-parser')
 const _ = require('lodash')
 const fs = require('fs');
-var arrayCSV = [];
-var arrayOutPut = [];
+var dadosCSV = [];
+var listaSemIdDuplicado = [];
 
+fs.createReadStream('input.csv')
 
-fs.createReadStream('input.csv'
-  .trim(), {
-  columns: true,
-  columns_duplicates_to_array: true,
-  delimiter: [",", "/"]
-}
-)
   .pipe(csv())
 
   .on('headers', function (headerList) {
     headerList[2] = 'classes'
     headerList[3] = 'class02';
+    headerList[4] = 'emailPai'
   })
 
   .on('data', (data) => {
-    arrayCSV.push(data);
+    dadosCSV.push(data);
 
-    arrayOutPut = [...arrayCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all }) => {
+    listaSemIdDuplicado = [...dadosCSV.reduce((hash, { fullname, eid, classes, addresses, invisible, see_all }) => {
 
-      let arrayTemporaria = hash.get(eid) || { fullname, eid, classes: [], addresses: [], invisible, see_all };
+      let listaClassConcatenadas = hash.get(eid) || { fullname, eid, classes: [], addresses: [], invisible, see_all };
 
-      classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(classes));
+      classes = _.merge(classes, listaClassConcatenadas.class02 );
 
-      classes && (arrayTemporaria.classes = arrayTemporaria.classes.concat(arrayCSV.class02));
+      classes && (listaClassConcatenadas.classes = _.trim(_.split
+        (listaClassConcatenadas.classes.concat(classes),
+          (','),
+          listaClassConcatenadas.classes.lenght)));
 
-      return hash.set(eid, arrayTemporaria);
+      listaClassConcatenadas.addresses = [{ "address": "", "type": "", "tags": [] }];
+
+      return hash.set(eid, listaClassConcatenadas);
 
     }, new Map).values()];
-
   })
 
   .on('end', () => {
 
-    const arquivoJSON = JSON.stringify(arrayOutPut);
+    const arquivoJSON = JSON.stringify(listaSemIdDuplicado);
 
     fs.writeFile('output.json', arquivoJSON, (err) => {
       if (err) {
@@ -46,7 +45,3 @@ fs.createReadStream('input.csv'
       }
     })
   })
-
-
-
-
